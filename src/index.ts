@@ -1,50 +1,24 @@
-import yargs from 'yargs';
 import dotenv from 'dotenv';
-import { Client, User } from 'discord.js';
-import { fetchTargetTimeout, Location } from './Target';
+import { startDiscord } from './Discord';
+import { startTarget } from './Target';
+import { startDirect } from './Direct';
 
-const args = yargs.options({
-  zipcode: { type: 'string', demandOption: true, alias: 'z' },
-  discordId: { type: 'string', demandOption: false, alias: 'u' },
-}).argv;
+const start = async () => {
+  dotenv.config();
 
-const { zipcode, discordId } = args;
+  const discordId = process.env.DISCORD_ID as string;
+  const discordToken = process.env.DISCORD_TOKEN as string;
+  const zipcode = process.env.ZIPCODE as string;
 
-dotenv.config();
-const hitMessage = (locations: Location[]): string =>
-  `There has been a successful find near you at these locations:
-  ${locations.map((location) => location.store_name).join('\n')}
-  \nGood Luck!`;
+  const client = await startDiscord();
 
-async function startDiscordMode() {
-  let discordUser: User;
-  const DiscordClient = new Client();
-  const onTargetHit = (locations: Location[]): void => {
-    discordUser.send(hitMessage(locations));
-  };
+  if (discordId && discordToken && zipcode) {
+    startDirect(client);
+    startTarget(client, zipcode);
+  } else {
+    console.log('Missing `.env` variables.');
+    console.log('Required variables: DISCORD_TOKEN, ZIPCODE, DISCORD_ID');
+  }
+};
 
-  DiscordClient.login(process.env.DISCORD_TOKEN);
-  DiscordClient.on('ready', () => {
-    if (discordId) {
-      DiscordClient.users
-        .fetch(discordId)
-        .then((user) => {
-          discordUser = user;
-          user.send(
-            `Hello! I will be checking on targets in the ${zipcode} area for you!`,
-          );
-        })
-        .then(() => {
-          fetchTargetTimeout(10000, 'disk', zipcode, onTargetHit);
-          fetchTargetTimeout(10000, 'digital', zipcode, onTargetHit);
-        });
-    }
-  });
-}
-
-if (discordId) {
-  startDiscordMode();
-} else {
-  fetchTargetTimeout(10000, 'disk', zipcode, hitMessage);
-  fetchTargetTimeout(10000, 'digital', zipcode, hitMessage);
-}
+start();
