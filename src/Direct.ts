@@ -18,10 +18,9 @@ const checkDirect = async (
   await page.goto(
     'https://direct.playstation.com/en-us/consoles/console/playstation5-console.3005816',
   );
+  const pageTitle = await page.title();
 
-  const soldOutSelector = await page.$('.out-stock-wrpr');
-
-  if (!soldOutSelector) {
+  if (pageTitle.includes('Queue-it')) {
     messageDiscordUser(
       client,
       `Playstation Direct Queue is Starting!
