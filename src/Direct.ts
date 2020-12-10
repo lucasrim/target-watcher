@@ -1,45 +1,35 @@
+import axios from 'axios';
 import { Client } from 'discord.js';
-import puppeteer from 'puppeteer';
+import open from 'open';
 import { messageDiscordUser } from './Discord';
 
-const puppeteerOptions: puppeteer.LaunchOptions = {};
-const timeout = async () =>
-  new Promise((resolve) => {
-    setTimeout(() => resolve, 10 * 1000);
+const diskUrl =
+  'https://direct.playstation.com/en-us/consoles/console/playstation5-console.3005816';
+
+const digitalUrl =
+  'https://direct.playstation.com/en-us/consoles/console/playstation5-console.3005817';
+
+const checkPlaystationDirectRedirect = (client: Client) => {
+  axios.get(diskUrl).then((response) => {
+    const inQueueIt = response.data.indexOf('queue-it_log');
+    if (inQueueIt > 0) {
+      messageDiscordUser(
+        client,
+        `Playstation Direct Queue is Starting!
+            \nDisk: ${diskUrl}
+            \nDigital: ${digitalUrl}`,
+      );
+      open(diskUrl);
+    } else {
+      setTimeout(() => {
+        console.log('No redirect detected. Trying again...');
+        checkPlaystationDirectRedirect(client);
+      }, 5000);
+    }
   });
-
-const checkDirect = async (
-  client: Client,
-  browser: puppeteer.Browser,
-  page: puppeteer.Page,
-): Promise<void> => {
-  console.log('Starting Sony Direct');
-  messageDiscordUser(client, 'Starting watch for Direct Queue');
-  await page.goto(
-    'https://direct.playstation.com/en-us/consoles/console/playstation5-console.3005816',
-  );
-  const pageTitle = await page.title();
-
-  if (pageTitle.includes('Queue-it')) {
-    messageDiscordUser(
-      client,
-      `Playstation Direct Queue is Starting!
-      \nDisk: https://direct.playstation.com/en-us/consoles/console/playstation5-console.3005816
-      \nDigital: Disk: https://direct.playstation.com/en-us/consoles/console/playstation5-console.3005817`,
-    );
-
-    browser.close();
-  } else {
-    await timeout();
-    await page.reload();
-    checkDirect(client, browser, page);
-  }
 };
 
 export const startDirect = async (client: Client) => {
-  const browser = await puppeteer.launch(puppeteerOptions);
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1366, height: 768 });
-
-  checkDirect(client, browser, page);
+  await messageDiscordUser(client, 'Watching PS5 Direct');
+  checkPlaystationDirectRedirect(client);
 };

@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 import { startDiscord } from './Discord';
-import { startTarget } from './Target';
 import { startDirect } from './Direct';
 
 const start = async () => {
@@ -13,12 +12,16 @@ const start = async () => {
   const client = await startDiscord();
 
   if (discordId && discordToken && zipcode) {
-    startDirect(client);
-    startTarget(client, zipcode);
+    try {
+      // await startTarget(client, zipcode);
+      await startDirect(client);
+    } catch (err) {
+      console.log(err);
+    }
   } else {
     console.log('Missing `.env` variables.');
     console.log('Required variables: DISCORD_TOKEN, ZIPCODE, DISCORD_ID');
   }
 };
 
-start();
+start()
