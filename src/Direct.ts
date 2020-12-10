@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { format } from 'date-fns';
 import { Client } from 'discord.js';
 import open from 'open';
 import { messageDiscordUser } from './Discord';
@@ -16,6 +17,7 @@ const checkPlaystationDirectRedirect = (client: Client) => {
       messageDiscordUser(
         client,
         `Playstation Direct Queue is Starting!
+            \nTime: ${format(Date.now(), "yyyy-MM-dd'T'HH:mm:ss")}
             \nDisk: ${diskUrl}
             \nDigital: ${digitalUrl}`,
       );
@@ -30,6 +32,10 @@ const checkPlaystationDirectRedirect = (client: Client) => {
 };
 
 export const startDirect = async (client: Client) => {
-  await messageDiscordUser(client, 'Watching PS5 Direct');
+  await messageDiscordUser(
+    client,
+    `Watching PS5 Direct
+    \nCurrent Time: ${format(Date.now(), "yyyy-MM-dd'T'HH:mm:ss")}`,
+  );
   checkPlaystationDirectRedirect(client);
 };
